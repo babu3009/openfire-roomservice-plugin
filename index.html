@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Openfire roomservice plugin : Openfire roomservice plugin to allows administration of rooms and MUC service via HTTP requests." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Openfire roomservice plugin</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/babu3009/roomservice">View on GitHub</a>
+
+          <h1 id="project_title">Openfire roomservice plugin</h1>
+          <h2 id="project_tagline">Openfire roomservice plugin to allows administration of rooms and MUC service via HTTP requests.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/babu3009/roomservice/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/babu3009/roomservice/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="openfire-roomservice-plugin" class="anchor" href="#openfire-roomservice-plugin"><span class="octicon octicon-link"></span></a>openfire-roomservice-plugin</h1>
+
+<p>Openfire roomservice plugin to allows administration of rooms and MUC service via HTTP requests.</p>
+
+<p>Configuration page included into plugin like roomservice plugin.
+The service address is [hostname]/plugins/roomservice/roomService
+Parameters:</p>
+
+<ul>
+<li>jid</li>
+<li>roomName</li>
+<li>secret</li>
+<li>subdomain</li>
+<li>type</li>
+<li>description</li>
+</ul><p>Supported type: 'add', 'delete', 'createMultiUserChatService' and 'removeMultiUserChatService'  (updateMultiUserChatService -&gt; hidden)</p>
+
+<p>Reference <a href="http://www.igniterealtime.org/projects/openfire/plugins/roomservice/readme.html">http://www.igniterealtime.org/projects/openfire/plugins/roomservice/readme.html</a></p>
+
+<p>Remember to configure plugin in Openfire admin console.</p>
+
+<h3>
+<a name="example" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Example</h3>
+
+<p><a href="http://10.10.1.32:9090/plugins/roomService/roomservice?type=createMultiUserChatService&amp;secret=pWLz65KU&amp;subdomain=demo1&amp;description=this+is+a+demo+testing">http://10.10.1.32:9090/plugins/roomService/roomservice?type=createMultiUserChatService&amp;secret=pWLz65KU&amp;subdomain=demo1&amp;description=this+is+a+demo+testing</a></p>
+
+<h3>
+<a name="release" class="anchor" href="#release"><span class="octicon octicon-link"></span></a>Release</h3>
+
+<ul>
+<li>version 1.0.2</li>
+</ul>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Openfire roomservice plugin maintained by <a href="https://github.com/babu3009">babu3009</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>

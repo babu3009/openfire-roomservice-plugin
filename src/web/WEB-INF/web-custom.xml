@@ -3,7 +3,7 @@
 <web-app>
     <servlet>
         <servlet-name>RoomServiceServlet</servlet-name>
-        <servlet-class>org.jivesoftware.openfire.plugin.rooomservice.servlet.RoomServiceServlet</servlet-class>
+        <servlet-class>org.jivesoftware.openfire.plugin.roomService.RoomServiceServlet</servlet-class>
     </servlet>
     
     <servlet-mapping>

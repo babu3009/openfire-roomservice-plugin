@@ -18,12 +18,16 @@
  * limitations under the License.
  */
 
-package org.jivesoftware.openfire.plugin.rooomservice.servlet;
+package org.jivesoftware.openfire.plugin.roomService;
 
 import org.jivesoftware.admin.AuthCheckFilter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.NotAllowedException;
-import org.jivesoftware.openfire.plugin.rooomservice.RoomServicePlugin;
+import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.NotFoundException;
+
+import org.jivesoftware.openfire.plugin.RoomServicePlugin;
 import org.jivesoftware.util.Log;
 
 import java.io.IOException;
@@ -35,6 +39,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 /**
  * Servlet that addition/deletion/modification of the users info in the system.
@@ -49,27 +55,27 @@ import javax.servlet.http.HttpServletResponse;
  * @author Justin Hunt
  */
 public class RoomServiceServlet extends HttpServlet {
-
+ //Logger log = LoggerFactory.getLogger(RoomServiceServlet.class);
     private static final long serialVersionUID = -7039598193937438431L;
-    
+
     private RoomServicePlugin plugin;
 
     @Override
-	public void init(ServletConfig servletConfig) throws ServletException {
+    public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
         plugin = (RoomServicePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("roomservice");
- 
+
         // Exclude this servlet from requiring the user to login
-        AuthCheckFilter.addExclude("roomservice/roomservice");
+        AuthCheckFilter.addExclude("roomService/roomservice");
     }
-    
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         doGet(request, response);
     }
 
     @Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Printwriter for writing out responses to browser
         PrintWriter out = response.getWriter();
 
@@ -86,8 +92,8 @@ public class RoomServiceServlet extends HttpServlet {
                 }
             }
             if (!plugin.getAllowedIPs().contains(ipAddress)) {
-                Log.warn("User service rejected service to IP address: " + ipAddress);
-                replyError("RequestNotAuthorised",response, out);
+                //log.warn("User service rejected service to IP address: " + ipAddress);
+                replyError("RequestNotAuthorised", response, out);
                 return;
             }
         }
@@ -99,27 +105,28 @@ public class RoomServiceServlet extends HttpServlet {
         String type = request.getParameter("type");
         String secret = request.getParameter("secret");
 //        String groupNames = request.getParameter("groups");
-        
+
         String jid = request.getParameter("jid");
         String subdomain = request.getParameter("subdomain");
         String roomName = request.getParameter("roomName");
-        
+        String description = request.getParameter("description");
+
         //No defaults, add, delete, update only
         //type = type == null ? "image" : type;
-       
-       // Check that our plugin is enabled.
+
+        // Check that our plugin is enabled.
         if (!plugin.isEnabled()) {
-            Log.warn("Room service plugin is disabled: " + request.getQueryString());
-            replyError("RoomServiceDisabled",response, out);
+            //log.warn("Room service plugin is disabled: " + request.getQueryString());
+            replyError("RoomServiceDisabled", response, out);
             return;
         }
-       
+
         // Check this request is authorised
-        if (secret == null || !secret.equals(plugin.getSecret())){
-            Log.warn("An unauthorised user service request was received: " + request.getQueryString());
-            replyError("RequestNotAuthorised",response, out);
+        if (secret == null || !secret.equals(plugin.getSecret())) {
+            //log.warn("An unauthorised user service request was received: " + request.getQueryString());
+            replyError("RequestNotAuthorised", response, out);
             return;
-         }
+        }
 
         // Some checking is required on the username
 //        if (username == null){
@@ -133,44 +140,60 @@ public class RoomServiceServlet extends HttpServlet {
 //            username = username.trim().toLowerCase();
 //            username = JID.escapeNode(username);
 //            username = Stringprep.nodeprep(username);
-            if ("add".equals(type)) {
-                plugin.createChat(jid, subdomain, roomName);
-                replyMessage("ok",response, out);
-                //imageProvider.sendInfo(request, response, presence);
-            }
-            else if ("delete".equals(type)) {
-                plugin.deleteChat(jid, subdomain, roomName);
-                replyMessage("ok",response,out);
-                //xmlProvider.sendInfo(request, response, presence);
-            } else {
-                Log.warn("The userService servlet received an invalid request of type: " + type);
-                // TODO Do something
-            }
+          
+            
+            if (type.equals("add")) 
+            {  
+				plugin.createChat(jid, subdomain, roomName);
+                    replyMessage("ok", response, out);
+			} else if (type.equals("delete")) 
+			{  
+					 plugin.deleteChat(jid, subdomain, roomName);
+                    replyMessage("ok", response, out);
+			}
+			else if (type.equals("createMultiUserChatService")) 
+			{  
+				 plugin.createMultiUserChatService(subdomain, description, false);
+                    replyMessage("ok", response, out);
+			}
+			else if (type.equals("removeMultiUserChatService")) 
+			{  
+				plugin.removeMultiUserChatService(subdomain);
+				replyMessage("ok", response, out);
+			} else 
+			{  
+				//log.warn("The roomService servlet received an invalid request of type: " + type);
+			} 
+
+            
+            
         } catch (NotAllowedException e) {
-            replyError("NotAllowedException",response, out);
+            replyError("NotAllowedException", response, out);
+        //} catch (NotFoundException e) {
+        //    replyError("NotFoundException", response, out);
+        //} catch (AlreadyExistsException e) {
+        //    replyError("AlreadyExistsException", response, out);
         } catch (IllegalArgumentException e) {
-            replyError("IllegalArgumentException",response, out);
-//        } catch (StringprepException e) {
-//            replyError("StringprepException " + e.getMessage(), response, out);
+            replyError("IllegalArgumentException", response, out);
         } catch (RuntimeException e) {
-            replyError(e.toString(),response, out);
+            replyError(e.toString(), response, out);
         }
     }
 
-    private void replyMessage(String message,HttpServletResponse response, PrintWriter out){
-        response.setContentType("text/xml");        
+    private void replyMessage(String message, HttpServletResponse response, PrintWriter out) {
+        response.setContentType("text/xml");
         out.println("<result>" + message + "</result>");
         out.flush();
     }
 
-    private void replyError(String error,HttpServletResponse response, PrintWriter out){
-        response.setContentType("text/xml");        
+    private void replyError(String error, HttpServletResponse response, PrintWriter out) {
+        response.setContentType("text/xml");
         out.println("<error>" + error + "</error>");
         out.flush();
     }
-    
+
     @Override
-	public void destroy() {
+    public void destroy() {
         super.destroy();
         // Release the excluded URL
         AuthCheckFilter.removeExclude("roomService/roomservice");

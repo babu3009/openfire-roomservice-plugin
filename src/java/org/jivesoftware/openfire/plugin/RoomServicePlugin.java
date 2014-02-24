@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package org.jivesoftware.openfire.plugin.rooomservice;
+package org.jivesoftware.openfire.plugin;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
@@ -25,6 +25,8 @@ import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
@@ -32,9 +34,12 @@ import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.JID;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * Plugin that allows the administration of users via HTTP requests.
@@ -84,6 +89,43 @@ public class RoomServicePlugin implements Plugin, PropertyEventListener {
     public void deleteChat(String jid, String subdomain, String roomName) {
         MultiUserChatService multiUserChatService = chatManager.getMultiUserChatService(subdomain);
         multiUserChatService.removeChatRoom(roomName);
+    }
+
+    //http://www.igniterealtime.org/builds/openfire/docs/latest/documentation/javadoc/org/jivesoftware/openfire/muc/MultiUserChatManager.html#createMultiUserChatService%28java.lang.String,%20java.lang.String,%20java.lang.Boolean%29
+    public MultiUserChatService createMultiUserChatService(String subdomain,
+                                                               String description,
+                                                               Boolean isHidden){
+																   try{
+        MultiUserChatService multiUserChatService = chatManager.createMultiUserChatService(subdomain, description, isHidden);
+        return multiUserChatService;
+}
+		catch (AlreadyExistsException e) {
+         throw new RuntimeException("AlreadyExistsException");
+        }
+        
+        //    throws AlreadyExistsException
+    }
+
+    public void updateMultiUserChatService(String cursubdomain, String newsubdomain, String description)
+    {
+		try{
+        chatManager.updateMultiUserChatService(cursubdomain, newsubdomain, description);
+        }
+		catch (NotFoundException e) {
+         throw new RuntimeException("NotFoundException");
+        }
+        //throws NotFoundException
+    }
+    public void removeMultiUserChatService(String subdomain)
+    {
+		try
+		{
+         chatManager.removeMultiUserChatService(subdomain);
+         }
+		catch (NotFoundException e) {
+         throw new RuntimeException("NotFoundException");
+        }
+       //throws NotFoundException
     }
 
     /**

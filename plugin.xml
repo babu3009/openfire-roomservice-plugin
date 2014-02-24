@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.openfire.plugin.RoomServicePlugin</class>
+    <name>Room Service</name>
+    <description>Allows room and MUC administration of users via HTTP requests.</description>
+    <author>Isaiyavan Babu Karan</author>
+    <version>1.0.2</version>
+    <date>02/24/2014</date>
+    <minServerVersion>3.9.0</minServerVersion>
+    
+    <adminconsole>		
+        <tab id="tab-server">
+            <sidebar id="sidebar-server-settings">
+                <item id="room-service" name="Room Service" url="room-service.jsp"
+                     description="Click to manage the service that allows remote admin of rooms and MUC" />
+            </sidebar>
+        </tab>
+    </adminconsole>
+
+</plugin>

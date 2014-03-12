@@ -100,7 +100,7 @@ public class RoomServicePlugin implements Plugin, PropertyEventListener {
         //maxUsers = "10";
         room.setMaxUsers(Integer.parseInt(maxUsers));
         //broadcastModerator = "true";
-        room.setModerated(true);
+        //room.setModerated(true);
         room.setPublicRoom(true);
         room.setDescription(roomDescription);
         room.setNaturalLanguageName(roomNaturalName);

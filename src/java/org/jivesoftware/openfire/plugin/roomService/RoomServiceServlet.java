@@ -101,15 +101,20 @@ public class RoomServiceServlet extends HttpServlet {
 //        String username = request.getParameter("username");
 //        String password = request.getParameter("password");
 //        String name = request.getParameter("name");
-//        String email = request.getParameter("email");
+        String jidResource = request.getParameter("jidresource");
         String type = request.getParameter("type");
         String secret = request.getParameter("secret");
-//        String groupNames = request.getParameter("groups");
+        String jidDomain = request.getParameter("jiddomain");
+
 
         String jid = request.getParameter("jid");
         String subdomain = request.getParameter("subdomain");
-        String roomName = request.getParameter("roomName");
+        String roomName = request.getParameter("roomname");
         String description = request.getParameter("description");
+
+        String roomNaturalName = request.getParameter("roomnaturalname");
+        String roomSubject = request.getParameter("subject");
+        String maxUsers = request.getParameter("maxusers");
 
         //No defaults, add, delete, update only
         //type = type == null ? "image" : type;
@@ -146,7 +151,13 @@ public class RoomServiceServlet extends HttpServlet {
             {  
 				plugin.createChat(jid, subdomain, roomName);
                     replyMessage("ok", response, out);
-			} else if (type.equals("delete")) 
+			} else if (type.equals("add2"))
+            {
+                //createChat2(String jidNode, String jidDomain,
+                //String jidResource  , String subdomain, String roomName, String roomNaturalName,String roomSubject, String roomDescription, String maxUsers)
+                plugin.createChat2(jid, jidDomain, jidResource, subdomain, roomName, roomNaturalName, roomSubject,  description,  maxUsers);
+                replyMessage("ok", response, out);
+            } else if (type.equals("delete"))
 			{  
 					 plugin.deleteChat(jid, subdomain, roomName);
                     replyMessage("ok", response, out);

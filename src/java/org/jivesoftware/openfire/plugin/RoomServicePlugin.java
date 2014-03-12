@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.plugin;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.NotAllowedException;
@@ -81,9 +82,38 @@ public class RoomServicePlugin implements Plugin, PropertyEventListener {
         PropertyEventDispatcher.removeListener(this);
     }
 
-    public void createChat(String jid, String subdomain, String roomName) throws NotAllowedException {
+    public void createChat(String jidNode, String subdomain, String roomName) throws NotAllowedException {
         MultiUserChatService multiUserChatService = chatManager.getMultiUserChatService(subdomain);
-        multiUserChatService.getChatRoom(roomName, new JID(jid));
+        //JID address = new JID(jidNode,jidDomain,jidResource);
+        JID address = new JID(jidNode);
+        multiUserChatService.getChatRoom(roomName, address);
+    }
+
+    public void createChat2(String jidNode, String jidDomain,
+                           String jidResource  , String subdomain, String roomName, String roomNaturalName,String roomSubject, String roomDescription, String maxUsers) throws NotAllowedException {
+        //room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName, address);
+        MultiUserChatService multiUserChatService = chatManager.getMultiUserChatService(subdomain);
+        JID address = new JID(jidNode,jidDomain,jidResource);
+        //JID address = server.createJID("AutoRoomCreator",jidResource);
+        multiUserChatService.getChatRoom(roomName, address);
+        MUCRoom room = multiUserChatService.getChatRoom(roomName);
+        //maxUsers = "10";
+        room.setMaxUsers(Integer.parseInt(maxUsers));
+        //broadcastModerator = "true";
+        room.setModerated(true);
+        room.setPublicRoom(true);
+        room.setDescription(roomDescription);
+        room.setNaturalLanguageName(roomNaturalName);
+        room.setSubject(roomSubject);
+        //publicRoom = "true";
+        // Rooms created from the admin console are always persistent
+        //persistentRoom = "true";
+        room.setPersistent(true);
+
+
+
+        room.saveToDB();
+
     }
     
     public void deleteChat(String jid, String subdomain, String roomName) {

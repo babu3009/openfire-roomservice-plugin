@@ -22,6 +22,7 @@ Parameters:
 Supported type: 'add', add2 (add extended), 'delete', 'createMultiUserChatService' and 'removeMultiUserChatService' (updateMultiUserChatService -> hidden)
 
 Example
+
 http://10.10.1.32:9090/plugins/roomService/roomservice?type=createMultiUserChatService&secret=pWLz65KU&subdomain=demo1&description=this+is+a+demo+testing
 
 http://10.10.1.32:9090/plugins/roomService/roomservice?type=add2&roomname=entryname&subdomain=hpc&secret=ESbSemyLQ%40Gk9CxwGmC&jid=hp.hpc&jidresource=chat1&jiddomain=chat1&description=this+room+is+created+by+default&roomnaturalname=Entry+Name&subject=test+room&maxusers=10

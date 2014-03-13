@@ -22,10 +22,13 @@ package org.jivesoftware.openfire.plugin;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRole;
 import org.jivesoftware.util.AlreadyExistsException;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.JiveGlobals;
@@ -33,8 +36,10 @@ import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
 import java.io.File;
+import java.lang.String;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -61,11 +66,11 @@ public class RoomServicePlugin implements Plugin, PropertyEventListener {
 
         secret = JiveGlobals.getProperty("plugin.roomservice.secret", "");
         // If no secret key has been assigned to the user service yet, assign a random one.
-        if (secret.equals("")){
+        if (secret.equals("")) {
             secret = StringUtils.randomString(8);
             setSecret(secret);
         }
-        
+
         // See if the service is enabled or not.
         enabled = JiveGlobals.getBooleanProperty("plugin.roomservice.enabled", false);
 
@@ -90,32 +95,79 @@ public class RoomServicePlugin implements Plugin, PropertyEventListener {
     }
 
     public void createChat2(String jidNode, String jidDomain,
-                           String jidResource  , String subdomain, String roomName, String roomNaturalName,String roomSubject, String roomDescription, String maxUsers) throws NotAllowedException {
+                            String jidResource, String subdomain, String roomName, String roomNaturalName, String roomSubject, String roomDescription, String maxUsers) throws NotAllowedException {
         //room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName, address);
         MultiUserChatService multiUserChatService = chatManager.getMultiUserChatService(subdomain);
-        JID address = new JID(jidNode,jidDomain,jidResource);
+        JID address = new JID(jidNode, jidDomain, jidResource);
         //JID address = server.createJID("AutoRoomCreator",jidResource);
         multiUserChatService.getChatRoom(roomName, address);
-        MUCRoom room = multiUserChatService.getChatRoom(roomName);
-        //maxUsers = "10";
-        room.setMaxUsers(Integer.parseInt(maxUsers));
-        //broadcastModerator = "true";
-        //room.setModerated(true);
-        room.setPublicRoom(true);
+        MUCRoom room = multiUserChatService.getChatRoom(roomName, address);
+
+
+        try {
+            room.unlock(room.getRole());
+        } catch (ForbiddenException e) {
+
+        }
+
+        //room.getIQOwnerHandler().handleIQ(iq, room.getRole());
+        room.saveToDB();
+
         room.setDescription(roomDescription);
         room.setNaturalLanguageName(roomNaturalName);
         room.setSubject(roomSubject);
-        //publicRoom = "true";
-        // Rooms created from the admin console are always persistent
-        //persistentRoom = "true";
+        room.setCanOccupantsChangeSubject(false);
+        room.setMaxUsers(Integer.parseInt(maxUsers));
+        List<String> rolesToBroadcastPresence = new ArrayList<String>();
+        rolesToBroadcastPresence.add("moderator");
+        rolesToBroadcastPresence.add("participant");
+        rolesToBroadcastPresence.add("visitor");
+        room.setRolesToBroadcastPresence(rolesToBroadcastPresence);
+        room.setPublicRoom(true);
         room.setPersistent(true);
+        room.setModerated(false);
+        room.setMembersOnly(false);
+        room.setCanOccupantsInvite(false);
+        room.setLogEnabled(false);
+        room.setChangeNickname(true);
+        room.setLoginRestrictedToNickname(false);
+        room.setRegistrationEnabled(true);
+        room.setCanAnyoneDiscoverJID(true);
+        room.saveToDB();
+        //field = new XFormFieldImpl("muc#roomconfig_roomadmins");
+//        List<JID> roomadmins = new ArrayList<JID>();
+//        for (JID adminJID : server.getAdmins()) {
+//            roomadmins.add(adminJID);
+//        }
+//        room.addAdmins(roomadmins, room.getRole());
+
+        try {
+            if (!room.getOwners().contains(address)) {
+                room.addOwner(address, room.getRole());
+            }
+        } catch (ForbiddenException e) {
+
+        }
+
+        for (JID admins : server.getAdmins()) {
+            try {
+
+                if (!room.getOwners().contains(admins.toBareJID())) {
+                    room.addOwner(admins, room.getRole());
+                }
+
+            } catch (ForbiddenException e) {
+
+            }
+        }
 
 
-
+        //room.createPresence(Presence.Type.subscribed);
         room.saveToDB();
 
+        //multiUserChatService.refreshChatRoom(roomName);
     }
-    
+
     public void deleteChat(String jid, String subdomain, String roomName) {
         MultiUserChatService multiUserChatService = chatManager.getMultiUserChatService(subdomain);
         multiUserChatService.removeChatRoom(roomName);
@@ -123,39 +175,34 @@ public class RoomServicePlugin implements Plugin, PropertyEventListener {
 
     //http://www.igniterealtime.org/builds/openfire/docs/latest/documentation/javadoc/org/jivesoftware/openfire/muc/MultiUserChatManager.html#createMultiUserChatService%28java.lang.String,%20java.lang.String,%20java.lang.Boolean%29
     public MultiUserChatService createMultiUserChatService(String subdomain,
-                                                               String description,
-                                                               Boolean isHidden){
-																   try{
-        MultiUserChatService multiUserChatService = chatManager.createMultiUserChatService(subdomain, description, isHidden);
-        return multiUserChatService;
-}
-		catch (AlreadyExistsException e) {
-         throw new RuntimeException("AlreadyExistsException");
+                                                           String description,
+                                                           Boolean isHidden) {
+        try {
+            MultiUserChatService multiUserChatService = chatManager.createMultiUserChatService(subdomain, description, isHidden);
+            return multiUserChatService;
+        } catch (AlreadyExistsException e) {
+            throw new RuntimeException("AlreadyExistsException");
         }
-        
+
         //    throws AlreadyExistsException
     }
 
-    public void updateMultiUserChatService(String cursubdomain, String newsubdomain, String description)
-    {
-		try{
-        chatManager.updateMultiUserChatService(cursubdomain, newsubdomain, description);
-        }
-		catch (NotFoundException e) {
-         throw new RuntimeException("NotFoundException");
+    public void updateMultiUserChatService(String cursubdomain, String newsubdomain, String description) {
+        try {
+            chatManager.updateMultiUserChatService(cursubdomain, newsubdomain, description);
+        } catch (NotFoundException e) {
+            throw new RuntimeException("NotFoundException");
         }
         //throws NotFoundException
     }
-    public void removeMultiUserChatService(String subdomain)
-    {
-		try
-		{
-         chatManager.removeMultiUserChatService(subdomain);
-         }
-		catch (NotFoundException e) {
-         throw new RuntimeException("NotFoundException");
+
+    public void removeMultiUserChatService(String subdomain) {
+        try {
+            chatManager.removeMultiUserChatService(subdomain);
+        } catch (NotFoundException e) {
+            throw new RuntimeException("NotFoundException");
         }
-       //throws NotFoundException
+        //throws NotFoundException
     }
 
     /**
@@ -204,29 +251,25 @@ public class RoomServicePlugin implements Plugin, PropertyEventListener {
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-        JiveGlobals.setProperty("plugin.roomservice.enabled",  enabled ? "true" : "false");
+        JiveGlobals.setProperty("plugin.roomservice.enabled", enabled ? "true" : "false");
     }
 
     public void propertySet(String property, Map<String, Object> params) {
         if (property.equals("plugin.roomservice.secret")) {
-            this.secret = (String)params.get("value");
-        }
-        else if (property.equals("plugin.roomservice.enabled")) {
-            this.enabled = Boolean.parseBoolean((String)params.get("value"));
-        }
-        else if (property.equals("plugin.roomservice.allowedIPs")) {
-            this.allowedIPs = StringUtils.stringToCollection((String)params.get("value"));
+            this.secret = (String) params.get("value");
+        } else if (property.equals("plugin.roomservice.enabled")) {
+            this.enabled = Boolean.parseBoolean((String) params.get("value"));
+        } else if (property.equals("plugin.roomservice.allowedIPs")) {
+            this.allowedIPs = StringUtils.stringToCollection((String) params.get("value"));
         }
     }
 
     public void propertyDeleted(String property, Map<String, Object> params) {
         if (property.equals("plugin.roomservice.secret")) {
             this.secret = "";
-        }
-        else if (property.equals("plugin.roomservice.enabled")) {
+        } else if (property.equals("plugin.roomservice.enabled")) {
             this.enabled = false;
-        }
-        else if (property.equals("plugin.roomservice.allowedIPs")) {
+        } else if (property.equals("plugin.roomservice.allowedIPs")) {
             this.allowedIPs = Collections.emptyList();
         }
     }
